@@ -5,6 +5,9 @@
 # Review and capture S.M.A.R.T. health attributes and other information
 # about a storage device
 
+VERSION="1.0.3"
+VERSION_DATE="2019-01-03"
+
 # Output for smartctl -x
 TMP_FILE_X="/tmp/capture-smartctlx.$$"
 
@@ -28,6 +31,11 @@ function usage {
   then
     lsscsi
   fi
+}
+
+# Remove extra spaces from raw text
+function clean_text {
+  echo $1 | sed -e 's/^[ \t]*//' | sed -e 's/[ \t]*//' |  sed 's/ /-/g' | sed 's#/#_#g'
 }
 
 if [[ $(id -u) != 0 ]]
@@ -57,28 +65,68 @@ else
     smartctl -A $BLOCK_DEVICE > $TMP_FILE_A
 
     # Reported via stdout and used in log file name generation
-    FAMILY=$(cat $TMP_FILE_X | egrep '^Model Family:' | awk -F ":" '{print $2}' | sed -e 's/^[ \t]*//' | sed -e 's/[ \t]*//' | sed 's/ /-/g')
-    DEVICE=$(cat $TMP_FILE_X | egrep '^Device Model:' | awk -F ":" '{print $2}' | sed -e 's/^[ \t]*//' | sed -e 's/[ \t]*//' | sed 's/ /-/g')
-    SERIAL=$(cat $TMP_FILE_X | egrep '^Serial Number:' | awk -F ":" '{print $2}' | sed -e 's/^[ \t]*//' | sed -e 's/[ \t]*//'| sed 's/ /-/g')
-    FORM=$(cat $TMP_FILE_X | egrep '^Form Factor:' | awk -F ":" '{print $2}' | sed -e 's/^[ \t]*//' | sed -e 's/[ \t]*//' | sed 's/ /-/g')
+    FAMILY=$(cat $TMP_FILE_X | egrep '^Model Family:' | awk -F ":" '{print $2}')
+    DEVICE=$(cat $TMP_FILE_X | egrep '^Device Model:' | awk -F ":" '{print $2}')
+    SERIAL=$(cat $TMP_FILE_X | egrep '^Serial Number:' | awk -F ":" '{print $2}')
+    FORMFACTOR=$(cat $TMP_FILE_X | egrep '^Form Factor:' | awk -F ":" '{print $2}')
+
+    FAM=$(clean_text "$FAMILY")
+    DEV=$(clean_text "$DEVICE")
+    SER=$(clean_text "$SERIAL")
+    FORM=$(clean_text "$FORMFACTOR")
+
+    A187=$(cat $TMP_FILE_A | egrep '^187 ' | awk '{print $10}')
+    A197=$(cat $TMP_FILE_A | egrep '^197 ' | awk '{print $10}')
+    A198=$(cat $TMP_FILE_A | egrep '^198 ' | awk '{print $10}')
 
     DATE=$(date +"%Y-%m%d")
 
     # Show important information
+    echo "smartcap  $VERSION ($VERSION_DATE)"
     echo
-    echo "Drive is $FAMILY, $DEVICE, $SERIAL, $FORM"
+
+    if [[ $FORM != "" ]]
+    then
+      echo "Drive is a $FORM size $FAM model $DEV"
+    else
+      echo "Drive is a $FAM model $DEV"
+    fi
+    echo "Serial $SER"
     echo
     cat $TMP_FILE_A | egrep "^ID|^  4|^  5"
     echo
     cat $TMP_FILE_A | egrep "^ID|^187|^196|^197|^198"
 
-    OUTFILE="$OUTDIR/$FAMILY.$DEVICE.$SERIAL.$FORM.$DATE"
+    if [[ $A187 -gt 0 ]]
+    then
+      echo "*** WARNING Reported Uncorrectable > 0 - DRIVE UNHEALTHY"
+    fi
+
+    if [[ $A197 -gt 0 ]]
+    then
+      echo "*** WARNING Pending_Sector_Ct > 0 - SCRUBBING RECOMMENDED"
+    fi
+
+    if [[ $A198 -gt 0 ]]
+    then
+      echo "*** WARNING Offline_Uncorrectable > 0 - DRIVE UNHEALTHY"
+    fi
+
+    if [[ $FORM != "" ]]
+    then
+      OUTFILE="$OUTDIR/$FAM.$DEV.$SER.$FORM.$DATE"
+    else
+      OUTFILE="$OUTDIR/$FAM.$DEV.$SER.$DATE"
+    fi
 
     cat $TMP_FILE_X > $OUTFILE
     echo >> $OUTFILE
     cat $TMP_FILE_A >> $OUTFILE
 
     chown $USERNAME $OUTFILE
+
+    echo
+    echo "Logged S.M.A.R.T. data to $OUTFILE"
 
     rm $TMP_FILE_X $TMP_FILE_A
 
