@@ -30,12 +30,6 @@ function usage {
   fi
 }
 
-# Remove extra spaces from raw text
-function clean_text {
-  TEXT=$(echo $1 | sed -e 's/^[ \t]*//' | sed -e 's/[ \t]*//')
-  echo $TEXT
-}
-
 if [[ $(id -u) != 0 ]]
 then
   echo "Error: You must run this program as root or via 'sudo smartcap'"
