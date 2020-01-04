@@ -7,19 +7,28 @@ to the screen as well as recording comprehensive health to a log file for a
 long term history.
 
 ```
-sudo ./smartcap.sh /dev/sdb
+$ sudo ./smartcap /dev/sdb
 
-Drive is Seagate-Laptop-HDD, ST320LT012-9WS14C, W0VC0D60, 2.5-inches
+smartcap  1.0.4 (2019-01-03)
+
+Drive is a Seagate-Barracuda-7200.12 model ST3750528AS
+Serial 5VP30ZBY
 
 ID# ATTRIBUTE_NAME          FLAG     VALUE WORST THRESH TYPE      UPDATED  WHEN_FAILED RAW_VALUE
-  4 Start_Stop_Count        0x0032   090   090   020    Old_age   Always       -       10652
+  4 Start_Stop_Count        0x0032   099   099   020    Old_age   Always       -       1201
   5 Reallocated_Sector_Ct   0x0033   100   100   036    Pre-fail  Always       -       0
+  9 Power_On_Hours          0x0032   078   078   000    Old_age   Always       -       19285
+     803 days
 
 ID# ATTRIBUTE_NAME          FLAG     VALUE WORST THRESH TYPE      UPDATED  WHEN_FAILED RAW_VALUE
 187 Reported_Uncorrect      0x0032   100   100   000    Old_age   Always       -       0
-196 Reallocated_Event_Count 0x000f   099   099   030    Pre-fail  Always       -       1722 (3041 0)
-197 Current_Pending_Sector  0x0012   100   100   000    Old_age   Always       -       0
-198 Offline_Uncorrectable   0x0010   100   100   000    Old_age   Offline      -       0
+196 Reallocated_Event_Count 0x0032   100   100   036    Old_age   Always       -       0
+197 Current_Pending_Sector  0x0032   100   100   000    Old_age   Always       -       0
+198 Offline_Uncorrectable   0x0030   100   100   000    Old_age   Offline      -       0
+
+Logged S.M.A.R.T. data to /home/maxwell/smartlogs/Seagate-Barracuda-7200.12.ST3750528AS.5VP30ZBY.2020-0103
+
+View logs? [Y/n]n
 ```
 
 ## Features
