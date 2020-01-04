@@ -1,6 +1,12 @@
 # smartcap Versions
 
-## 1.0.2
+## 1.0.4
+
+* Better output Reporting
+* Calculate the number of powered on hours and report as days
+* Bring INFO attention to attribute 5, Reallocated_Sector_Ct
+
+## 1.0.3
 
 * Report the filename being logged for each drive
 * Use clean_text function to fix data text data from SMART attributes

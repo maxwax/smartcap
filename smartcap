@@ -5,7 +5,7 @@
 # Review and capture S.M.A.R.T. health attributes and other information
 # about a storage device
 
-VERSION="1.0.3"
+VERSION="1.0.4"
 VERSION_DATE="2019-01-03"
 
 # Output for smartctl -x
@@ -75,41 +75,76 @@ else
     SER=$(clean_text "$SERIAL")
     FORM=$(clean_text "$FORMFACTOR")
 
+    A5=$(cat $TMP_FILE_A | egrep '^  5 ' | awk '{print $10}')
+    A9=$(cat $TMP_FILE_A | egrep '^  9 ' | awk '{print $10}')
     A187=$(cat $TMP_FILE_A | egrep '^187 ' | awk '{print $10}')
     A197=$(cat $TMP_FILE_A | egrep '^197 ' | awk '{print $10}')
     A198=$(cat $TMP_FILE_A | egrep '^198 ' | awk '{print $10}')
 
     DATE=$(date +"%Y-%m%d")
 
-    # Show important information
+    #
+    # Reporting starts here
+    #
+
     echo "smartcap  $VERSION ($VERSION_DATE)"
     echo
 
+    # Not all drives report Form Factor information
     if [[ $FORM != "" ]]
     then
       echo "Drive is a $FORM size $FAM model $DEV"
     else
       echo "Drive is a $FAM model $DEV"
     fi
+
     echo "Serial $SER"
     echo
-    cat $TMP_FILE_A | egrep "^ID|^  4|^  5"
-    echo
-    cat $TMP_FILE_A | egrep "^ID|^187|^196|^197|^198"
 
+    # Show important attributes which are helpful but don't indicate failure
+    cat $TMP_FILE_A | egrep "^ID|^  4"
+    cat $TMP_FILE_A | egrep "^  5"
+    if [[ $A5 -gt 0 ]]
+    then
+      echo "^^^^^ INFO Attribute 5 Reallocated_Sector_Ct > 0 - Review"
+      echo
+    fi
+
+    cat $TMP_FILE_A | egrep "^  9"
+    echo -n $POWER_ON_HOURS
+    POWER_ON_DAYS=$(($A9/24))
+    echo "     $POWER_ON_DAYS days"
+    echo
+
+    # Now show attributes which might indicate impending drive failure
+    cat $TMP_FILE_A | egrep "^ID"
+
+    cat $TMP_FILE_A | egrep "^187"
     if [[ $A187 -gt 0 ]]
     then
-      echo "*** WARNING Reported Uncorrectable > 0 - DRIVE UNHEALTHY"
+      echo "^^^^^ WARNING Attribute 187 Reported Uncorrectable > 0 - DRIVE UNHEALTHY"
+      echo
     fi
 
+    cat $TMP_FILE_A | egrep "^196"
+    if [[ $A196 -gt 0 ]]
+    then
+      echo "^^^^^ WARNING Attribute 196 Reallocated_Event_Count > 0 - REVIEW ALL STATS"
+      echo
+    fi
+
+    cat $TMP_FILE_A | egrep "^197"
     if [[ $A197 -gt 0 ]]
     then
-      echo "*** WARNING Pending_Sector_Ct > 0 - SCRUBBING RECOMMENDED"
+      echo "^^^^^ WARNING Attribute 197 Pending_Sector_Ct > 0 - SCRUBBING RECOMMENDED"
+      echo
     fi
 
+    cat $TMP_FILE_A | egrep "^198"
     if [[ $A198 -gt 0 ]]
     then
-      echo "*** WARNING Offline_Uncorrectable > 0 - DRIVE UNHEALTHY"
+      echo "^^^^^ WARNING Attribute 198 Offline_Uncorrectable > 0 - DRIVE UNHEALTHY"
+      echo
     fi
 
     if [[ $FORM != "" ]]
@@ -119,6 +154,7 @@ else
       OUTFILE="$OUTDIR/$FAM.$DEV.$SER.$DATE"
     fi
 
+    # Construct a single output file
     cat $TMP_FILE_X > $OUTFILE
     echo >> $OUTFILE
     cat $TMP_FILE_A >> $OUTFILE
@@ -129,6 +165,13 @@ else
     echo "Logged S.M.A.R.T. data to $OUTFILE"
 
     rm $TMP_FILE_X $TMP_FILE_A
+
+    echo
+    read -p "View logs? [Y/n]" YESNO
+    if [[ $YESNO == "y" || $YESNO == "Y" || $YESNO == "yes" ]]
+    then
+      less $OUTFILE
+    fi
 
   fi
 fi
