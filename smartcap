@@ -65,21 +65,21 @@ else
     smartctl -A $BLOCK_DEVICE > $TMP_FILE_A
 
     # Reported via stdout and used in log file name generation
-    FAMILY=$(cat $TMP_FILE_X | egrep '^Model Family:' | awk -F ":" '{print $2}')
-    DEVICE=$(cat $TMP_FILE_X | egrep '^Device Model:' | awk -F ":" '{print $2}')
-    SERIAL=$(cat $TMP_FILE_X | egrep '^Serial Number:' | awk -F ":" '{print $2}')
-    FORMFACTOR=$(cat $TMP_FILE_X | egrep '^Form Factor:' | awk -F ":" '{print $2}')
+    FAMILY=$(cat $TMP_FILE_X | grep -E '^Model Family:' | awk -F ":" '{print $2}')
+    DEVICE=$(cat $TMP_FILE_X | grep -E '^Device Model:' | awk -F ":" '{print $2}')
+    SERIAL=$(cat $TMP_FILE_X | grep -E '^Serial Number:' | awk -F ":" '{print $2}')
+    FORMFACTOR=$(cat $TMP_FILE_X | grep -E '^Form Factor:' | awk -F ":" '{print $2}')
 
     FAM=$(clean_text "$FAMILY")
     DEV=$(clean_text "$DEVICE")
     SER=$(clean_text "$SERIAL")
     FORM=$(clean_text "$FORMFACTOR")
 
-    A5=$(cat $TMP_FILE_A | egrep '^  5 ' | awk '{print $10}')
-    A9=$(cat $TMP_FILE_A | egrep '^  9 ' | awk '{print $10}')
-    A187=$(cat $TMP_FILE_A | egrep '^187 ' | awk '{print $10}')
-    A197=$(cat $TMP_FILE_A | egrep '^197 ' | awk '{print $10}')
-    A198=$(cat $TMP_FILE_A | egrep '^198 ' | awk '{print $10}')
+    A5=$(cat $TMP_FILE_A | grep -E '^  5 ' | awk '{print $10}')
+    A9=$(cat $TMP_FILE_A | grep -E '^  9 ' | awk '{print $10}')
+    A187=$(cat $TMP_FILE_A | grep -E '^187 ' | awk '{print $10}')
+    A197=$(cat $TMP_FILE_A | grep -E '^197 ' | awk '{print $10}')
+    A198=$(cat $TMP_FILE_A | grep -E '^198 ' | awk '{print $10}')
 
     DATE=$(date +"%Y-%m%d")
 
@@ -102,45 +102,45 @@ else
     echo
 
     # Show important attributes which are helpful but don't indicate failure
-    cat $TMP_FILE_A | egrep "^ID|^  4"
-    cat $TMP_FILE_A | egrep "^  5"
+    cat $TMP_FILE_A | grep -E "^ID|^  4"
+    cat $TMP_FILE_A | grep -E "^  5"
     if [[ $A5 -gt 0 ]]
     then
       echo "^^^^^ INFO Attribute 5 Reallocated_Sector_Ct > 0 - Review"
       echo
     fi
 
-    cat $TMP_FILE_A | egrep "^  9"
+    cat $TMP_FILE_A | grep -E "^  9"
     echo -n $POWER_ON_HOURS
     POWER_ON_DAYS=$(($A9/24))
     echo "     $POWER_ON_DAYS days"
     echo
 
     # Now show attributes which might indicate impending drive failure
-    cat $TMP_FILE_A | egrep "^ID"
+    cat $TMP_FILE_A | grep -E "^ID"
 
-    cat $TMP_FILE_A | egrep "^187"
+    cat $TMP_FILE_A | grep -E "^187"
     if [[ $A187 -gt 0 ]]
     then
       echo "^^^^^ WARNING Attribute 187 Reported Uncorrectable > 0 - DRIVE UNHEALTHY"
       echo
     fi
 
-    cat $TMP_FILE_A | egrep "^196"
+    cat $TMP_FILE_A | grep -E "^196"
     if [[ $A196 -gt 0 ]]
     then
       echo "^^^^^ WARNING Attribute 196 Reallocated_Event_Count > 0 - REVIEW ALL STATS"
       echo
     fi
 
-    cat $TMP_FILE_A | egrep "^197"
+    cat $TMP_FILE_A | grep -E "^197"
     if [[ $A197 -gt 0 ]]
     then
       echo "^^^^^ WARNING Attribute 197 Pending_Sector_Ct > 0 - SCRUBBING RECOMMENDED"
       echo
     fi
 
-    cat $TMP_FILE_A | egrep "^198"
+    cat $TMP_FILE_A | grep -E "^198"
     if [[ $A198 -gt 0 ]]
     then
       echo "^^^^^ WARNING Attribute 198 Offline_Uncorrectable > 0 - DRIVE UNHEALTHY"
